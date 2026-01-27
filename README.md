@@ -1,97 +1,101 @@
-HAB BMP280 Data Logger
-[
-[
+# HAB BMP280 Data Logger 🚀
 
-High Altitude Balloon (HAB) telemetry payload featuring 5Hz BMP280 logging to SD card with autonomous cut-down at 30-minute timeout.
+[![Arduino](https://img.shields.io/badge/platform-Arduino-blue.svg)](https://www.arduino.cc/)
 
-Features
-5Hz BMP280 logging (temperature, pressure, altitude)
+**High Altitude Balloon (HAB) telemetry payload** featuring **5Hz BMP280 logging** to SD card with **autonomous cut-down** at **30-minute timeout**.
 
-32GB SD card data storage with timestamps
+## ✨ Features
 
-Termination: 30 minutes flight time
+- **5Hz BMP280 logging** (temperature, pressure, altitude)
+- **32GB SD card** data storage with timestamps
+- **Time termination**: 30 minutes flight time
+- **Standalone operation** (9V lithium battery)
+- **Out-of-range detection** (>9km altitude warning)
+- **Arduino Uno R4** compatible
 
-Standalone operation (9V lithium battery)
+## 🛠️ Hardware Requirements
 
-Out-of-range detection (>9km altitude warning)
+### Required:
+| Component | Quantity |
+|-----------|----------|
+| [Arduino Uno R4](https://store.arduino.cc/products/uno-r4-minima) | 1 |
+| [BMP280 barometer](https://www.adafruit.com/product/2651) (I2C) | 1 |
+| SD card adapter + **32GB microSD** (FAT32) | 1 |
+| **9V lithium battery** | 1 |
+| [Relay module](https://www.amazon.com/s?k=5v+relay+module) (cut-down) | 1 |
 
-Arduino Uno R4 compatible
+### Wiring Diagram
 
-Hardware Requirements
+| Component | VCC | GND | SCL | SDA | CS  | SCK  | MOSI | MISO |
+|-----------|-----|-----|-----|-----|-----|------|------|------|
+| **BMP280** | **5V** | **GND** | **A5** | **A4** | - | - | - | - |
+| **SD Card** | **5V** | **GND** | - | - | **D4** | **D13** | **D11** | **D12** |
+| **Relay** | **5V** | **GND** | - | - | **D7** | - | - | - |
 
-Required:
-• Arduino Uno R4
-• BMP280 barometer (I2C)
-• SD card adapter + 32GB microSD (FAT32)
-• 9V lithium battery
-• Relay module (for cut-down termination)
+> **💡 Power**: 9V battery → **Arduino Arduino 9V DC power barrel jack** for standalone<br>
+> **USB** for PC testing only
 
-Wiring Diagram
-Component	VCC	GND	SCL	SDA	CS	SCK	MOSI	MISO
-BMP280	5V	GND	A5	A4	-	-	-	-
-SD Card	5V	GND	-	-	D4	D13	D11	D12
-Relay	-	-	-	-	D7	-	-	-
-Power: 9V battery → Arduino 9V DC power barrel jack for standalone operation.
+### ⚡Power Comsumtion 
 
-Pin Configuration is in config.h
+| Component      | Current |
+| -------------- | ------- |
+| Arduino Uno R4 | ~80mA   |
+| BMP280         | ~1mA    |
+| SD Card (avg)  | ~30mA   |
+| Total          | ~110mA  |
+> 9V Lithium (1000mAh): 5~9 hours flight time
 
-Installation
-Install Libraries (Arduino IDE Library Manager):
+## 🚀 Installation
+1. Install Libraries (Arduino IDE Library Manager):
+- Adafruit BMP280 Library
+- Adafruit Unified Sensor
+- SD (built-in)
 
--  Adafruit BMP280 Library
--  Adafruit Unified Sensor
--  SD (built-in)
-Upload Arduino-HAB3.ino to Arduino Uno R4
+3. Upload Arduino-HAB3.ino to Arduino Uno R4
 
-Insert formatted microSD card (FAT32)
+4. Insert FAT32 formatted 32GB microSD card
 
-Standalone: Connect 9V lithium to Arduino 9V DC power barrel jack
-PC Test: USB power only
+Power:
 
-Expected Output
+- Standalone: 9V lithium → Arduino 9V DC power barrel jack
+
+- PC Test: USB only
+
+### 🔄 Operation Flow
+
+1. Power ON → BMP280 + SD init
+2. 5Hz logging → Data → SD card
+3. Every 5s → Buffer flush (safety)
+4. 30min OR 30km → RELAY ON (D7 HIGH)
+5. +2min → RELAY OFF (cut-down done)
+
+### 📊 Expected Output
+
 Serial Monitor (115200 baud):
+- BMP280 status: Success ✅
+- SD Card status: Success ✅
 
-BMP280 status: Success
-SD Card status: Success
+SD Card telemetery.csv file saved.
 
-SD Card log.txt:
-0:1:23 -> Temp: 22.5C, Pressure: 1002.3hPa, Altitude: 75m
-0:1:23 -> Temp: 22.6C, Pressure: 1002.1hPa, Altitude: 78m
-...
-0:30:00 -> TERMINATING FLIGHT
-0:32:00 -> FLIGHT TERMINATION COMPLETE
+### 🆘 Troubleshooting
+| Symptom              | Cause             | Fix                              |
+| -------------------- | ----------------- | -------------------------------- |
+| "BMP280 init failed" | Wrong I2C address | (0x76)                           |
+| "SD init failed"     | Wrong CS pin      | Verify D4 connection             |
+| No telemetry.csv     | SD not formatted  | Verify pin connection            |
+| Hangs at startup     | while(!Serial)    | Comment out for standalone       |
 
-Operation
-Power on → Both modules initialize
-
-5Hz logging → BMP280 data to SD card
-
-Every 5s → SD buffer flush (data safety)
-
-30min → Relay activates (D7 HIGH)
-
-+2min → Relay deactivates (cut-down complete)
-
-Status Indicators
-LED	Pin	Meaning
--
-
-Power Consumption
-Arduino Uno R4: ~80mA
-BMP280: ~1mA
-SD Card: ~30mA (avg)
-Total: ~110mA
-
-9V Lithium (1000mAh): 5~9 hours flight time
-
-Troubleshooting
-Symptom	Cause	Fix
-"BMP280 init failed"	Ensure I2C address (0x76) and pin connections
-"SD init failed"	Wrong CS pin	Verify D4 connection
-Hangs at startup	while(!Serial)	Comment out for standalone
-
-Development Status
+## 📈 Development Status
 ✅ BMP280 5Hz logging
 ✅ SD card storage
 ✅ Autonomous termination
 ✅ Standalone operation
+🔄 GPS/AHT10 integration (future)
+
+## ⚙️ Pin Configuration (`config.h`)
+
+```cpp
+#define SD_CS_PIN          4
+#define RELAY_PIN          7
+#define TERMINATION_TIME   1800000UL  // 30 minutes
+#define TERMINATION_CUT_TIME 120000   // 2 minutes burn
