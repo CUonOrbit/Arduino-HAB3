@@ -11,9 +11,9 @@
 #define SD_CS_PIN         4           
 // (MOSI=11, MISO=12, SCK=13 are fixed in SPI)
 
-#define RELAY_PIN         7
+#define RELAY_PIN         5
 
-#define TERMINATION_TIME 1800000UL    // 30 minutes
-#define TERMINATION_CUT_TIME 120000   // 2 minutes (relay burn)
+//#define TERMINATION_TIME 1800000UL    // 30 minutes
+//#define TERMINATION_CUT_TIME 120000   // 2 minutes (relay burn)
 //#define TERMINATION_HEIGHT   30000  // In metres
 //#define TERMINATION_TIME     10800000  // 3 hours

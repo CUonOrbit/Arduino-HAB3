@@ -6,14 +6,10 @@
 //
 //unsigned long oneHour = 3600000UL;     // 1 hour in miliseconds
 unsigned long oneHour = 20000UL;     // 10 seconds (TESTING)
-
-unsigned long oneMinute = 60000UL; // 1 hour in miliseconds
-
+unsigned long oneMinute = 60000UL; 
 unsigned long startTime;
 bool pulseStarted = false;
 //
-
-
 
 // LED blink timing
 const int errorBlinkInterval = 500; // milliseconds
@@ -35,9 +31,8 @@ unsigned long lastFlushMs = 0;
 BMP280Module bmp280(0x76, 1013.25f, SENSOR_INTERVAL_MS);
 
 void setup() {
-  //
+  // Termination setup
   pinMode(5, OUTPUT);          // NiCr output
-
   startTime = millis(); // Start the 1-hour countdown
 
   // REMINDER:
@@ -122,14 +117,14 @@ void loop(){
     // --- Step 1: Wait 1 hour ---
     if (!pulseStarted && (millis() - startTime >= oneHour))  {
       logToSDCard("TERMINATING FLIGHT");
-      digitalWrite(5, HIGH);            // Turn NiCr ON
+      digitalWrite(RELAY_PIN, HIGH);            // RELAY_PIN 5; Turn NiCr ON
       pulseStarted = true;              // Mark that the 1-minute pulse has begun
       startTime = millis();             // Reuse timer to measure the 1-minute duration
     }
 
     // --- Step 2: After pulse starts, run NiCr for 1 minute ---
     if (pulseStarted && (millis() - startTime >= oneMinute))  {
-      digitalWrite(5, LOW);                                            // Turn NiCr OFF after 1 minute
+      digitalWrite(RELAY_PIN, LOW);                                            // Turn NiCr OFF after 1 minute
       logToSDCard("FLIGHT TERMINATION COMPLETE");
       // After this point, everything stays off permanently
     }
