@@ -13,6 +13,8 @@
 
 #define RELAY_PIN         5
 
+#define THERMISTOR_PIN    A0
+
 //#define TERMINATION_TIME 1800000UL    // 30 minutes
 //#define TERMINATION_CUT_TIME 120000   // 2 minutes (relay burn)
 //#define TERMINATION_HEIGHT   30000  // In metres

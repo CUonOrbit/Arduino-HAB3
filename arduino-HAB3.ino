@@ -3,7 +3,13 @@
 #include "BMP280Module.h"
 #include "config.h"
 
-//
+// Thermister
+int Vout;
+float R1 = 10000;   // 10K resistance
+float logR2, R2, Temp;
+float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07; // Steinhart - Hart coefficients (Relationship between resistance and temperature)
+
+// Termination
 //unsigned long oneHour = 3600000UL;     // 1 hour in miliseconds
 unsigned long oneHour = 20000UL;     // 10 seconds (TESTING)
 unsigned long oneMinute = 60000UL; 
@@ -31,17 +37,11 @@ unsigned long lastFlushMs = 0;
 BMP280Module bmp280(0x76, 1013.25f, SENSOR_INTERVAL_MS);
 
 void setup() {
-  // Termination setup
-  pinMode(5, OUTPUT);          // NiCr output
-  startTime = millis(); // Start the 1-hour countdown
-
   // REMINDER:
   // Resetting or disconnecting/reconnecting power
   // restarts the 1-hour timer from zero.
-  //
-
+  pinMode(RELAY_PIN, OUTPUT);          // NiCr output
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
 
   Serial.begin(115200);
@@ -71,6 +71,7 @@ void setup() {
     errorLedState = true;
   }
 
+  startTime = millis(); // Start the 1-hour countdown
   lastSensorMs = millis();
   lastFlushMs = millis();
 }
@@ -106,6 +107,16 @@ void loop(){
         logToSDCard(barometerLog);                        
       }
     } 
+
+    Vout = analogRead(ThermistorPin);
+    R2 = R1 * (1023.0 / (float)Vout - 1.0); // Voltage divider to find the second resistance
+    logR2 = log(R2);
+    Temp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)); // Temperature in Kelvin
+    Temp = Temp - 273.15; // Converting to Celsius 
+
+    Serial.print("Temperature: "); 
+    Serial.print(Temp);
+    Serial.println("°C");
 
     // Periodic SD flush
     if (now - lastFlushMs >= FLUSH_INTERVAL_MS) {
