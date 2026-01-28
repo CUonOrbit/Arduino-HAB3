@@ -63,11 +63,11 @@ Power:
 
 ### 🔄 Operation Flow
 
-1. Power ON → BMP280 + SD init
+1. Power ON → BMP280 + SD init + Thermistor
 2. 5Hz logging → Data → SD card
 3. Every 5s → Buffer flush (safety)
-4. 30min OR 30km → RELAY ON (D7 HIGH)
-5. +2min → RELAY OFF (cut-down done)
+4. 30min → RELAY ON (D5 HIGH)
+5. +1min → RELAY OFF (cut-down done)
 
 ### 📊 Expected Output
 
@@ -86,16 +86,15 @@ SD Card telemetery.csv file saved.
 | Hangs at startup     | while(!Serial)    | Comment out for standalone       |
 
 ## 📈 Development Status
-✅ BMP280 5Hz logging
-✅ SD card storage
-✅ Autonomous termination
-✅ Standalone operation
-🔄 GPS/AHT10 integration (future)
+- ✅ BMP280 5Hz logging
+- ✅ SD card storage
+- ✅ Autonomous termination
+- ✅ Standalone operation
+- 🔄 GPS/AHT10 integration (future)
 
 ## ⚙️ Pin Configuration (`config.h`)
 
 ```cpp
 #define SD_CS_PIN          4
-#define RELAY_PIN          7
-#define TERMINATION_TIME   1800000UL  // 30 minutes
-#define TERMINATION_CUT_TIME 120000   // 2 minutes burn
+#define RELAY_PIN          5
+#define THERMISTOR_PIN    A0
