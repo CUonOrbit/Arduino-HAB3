@@ -1,29 +1,20 @@
 #include <Wire.h>
 #include "SDCardModule.h"
 #include "BMP280Module.h"
+#include "ThermistorModule.h"
 #include "config.h"
-
-// Thermister
-int Vout;
-float R1 = 10000;   // 10K resistance
-float logR2, R2, Temp;
-float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07; // Steinhart - Hart coefficients (Relationship between resistance and temperature)
 
 // Termination
 //unsigned long oneHour = 3600000UL;     // 1 hour in miliseconds
-unsigned long oneHour = 20000UL;     // 10 seconds (TESTING)
-unsigned long oneMinute = 60000UL; 
-unsigned long startTime;
+unsigned long oneHour = 30000UL;     // 10 seconds = 10000 (TESTING)
+unsigned long oneMinute = 60000UL;    // 1 min = 60000
+unsigned long startTime = 0;
 bool pulseStarted = false;
-//
 
 // LED blink timing
 const int errorBlinkInterval = 500; // milliseconds
 bool errorLedState = false;
 unsigned long lastBlinkTime = 0;
-
-bool isTerminating = false;
-unsigned long terminationStart = 0;
 
 // 5 Hz -> 200 ms interval for BMP280
 const unsigned long SENSOR_INTERVAL_MS = 200UL; // 5Hz
@@ -33,8 +24,9 @@ unsigned long lastSensorMs = 0;
 const unsigned long FLUSH_INTERVAL_MS = 5000UL; 
 unsigned long lastFlushMs = 0;
 
-// Create BMP280 module instance
+// Create module instance
 BMP280Module bmp280(0x76, 1013.25f, SENSOR_INTERVAL_MS);
+ThermistorModule thermistor(THERMISTOR_PIN);
 
 void setup() {
   // REMINDER:
@@ -48,8 +40,7 @@ void setup() {
   while (!Serial);      // remove when standalone
 
   delay(1000);
-  Serial.println(F("BMP280 5Hz"));
-  Serial.println(F("SD Logging"));
+  Serial.println(F("Initialize BMP280 5Hz, SD Card"));
 
   // Track module initialization status
   bool sdOK = initSDCard(SD_CS_PIN);
@@ -71,6 +62,9 @@ void setup() {
     errorLedState = true;
   }
 
+  Serial.println("H:M:S,Temp,Pressure,Altitude,BoardTemp");
+  String header_csv = "H:M:S,Temp(°C),Pressure(hPa),Altitude(m),BoardTemp(°C)";
+  logToSDCard(header_csv + "\n");
   startTime = millis(); // Start the 1-hour countdown
   lastSensorMs = millis();
   lastFlushMs = millis();
@@ -92,39 +86,52 @@ void loop(){
     // BMP280 data
     if (bmp280.update()) {                     // will be true whenever it takes a new sample
       const BMP280Reading &r = bmp280.getLastReading();
-
+      String timestamp = getTimestamp();
       if (!bmp280.isValid()) {                // checks the last reading's pressure against the range (300-1100 hPa)
-        String barometerLog = String("Temp: ") + r.temperatureC +
-                                "C, Pressure: " + r.pressureHpa +
-                                "hPa (OOR), Altitude: " + r.altitudeM +       // flag it as out-of-range
-                                "m (OOR)";  
+        String barometerLog = timestamp +
+                                "," + r.temperatureC +
+                                "," + r.pressureHpa +
+                                "(OOR)," + r.altitudeM +       // flag it as out-of-range
+                                "(OOR)";  
         logToSDCard(barometerLog);
       } else {
-        String barometerLog = String("Temp: ") + r.temperatureC +
-                                "C, Pressure: " + r.pressureHpa +
-                                "hPa, Altitude: " + r.altitudeM +
-                                "m";
+        String barometerLog = timestamp +
+                                "," + r.temperatureC +
+                                "," + r.pressureHpa +
+                                "," + r.altitudeM +
+                                ",";
         logToSDCard(barometerLog);                        
       }
     } 
 
-    Vout = analogRead(ThermistorPin);
-    R2 = R1 * (1023.0 / (float)Vout - 1.0); // Voltage divider to find the second resistance
-    logR2 = log(R2);
-    Temp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)); // Temperature in Kelvin
-    Temp = Temp - 273.15; // Converting to Celsius 
+    float boardTempC = thermistor.readTemperatureC();
+    if (thermistor.isValid(boardTempC)) {
+      String tempLog = thermistor.getLogString(boardTempC);
+      logToSDCard(tempLog + "\n");  // Logs to SD + Serial
+      Serial.print(","); 
+      Serial.print(boardTempC, 1);
+      Serial.println(F(""));
+    } else {
+      logToSDCard("BoardTemp: INVALID\n");
+      Serial.println(F("BoardTemp: INVALID"));
+    }
 
-    Serial.print("Temperature: "); 
-    Serial.print(Temp);
-    Serial.println("°C");
+    // Vout = analogRead(ThermistorPin);
+    // R2 = R1 * (1023.0 / (float)Vout - 1.0); // Voltage divider to find the second resistance
+    // logR2 = log(R2);
+    // Temp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)); // Temperature in Kelvin
+    // Temp = Temp - 273.15; // Converting to Celsius 
+
+    // Serial.print("Temperature: "); 
+    // Serial.print(Temp);
+    // Serial.println("°C");
 
     // Periodic SD flush
     if (now - lastFlushMs >= FLUSH_INTERVAL_MS) {
       lastFlushMs += FLUSH_INTERVAL_MS;
       flushSD();
     }
-//
-
+  
     // --- Step 1: Wait 1 hour ---
     if (!pulseStarted && (millis() - startTime >= oneHour))  {
       logToSDCard("TERMINATING FLIGHT");
@@ -139,19 +146,5 @@ void loop(){
       logToSDCard("FLIGHT TERMINATION COMPLETE");
       // After this point, everything stays off permanently
     }
-//
-    // Termination
-    // unsigned long currentTime = millis();  
-    // if((terminationStart == 0) && (currentTime > TERMINATION_TIME)) {
-    //   logToSDCard("TERMINATING FLIGHT"); 
-    //   digitalWrite(RELAY_PIN, HIGH); // Turn relay_pin 7 ON
-    //   isTerminating = true;
-    //   terminationStart = currentTime;
-    // }
-    // else if(terminationStart && currentTime - terminationStart > TERMINATION_CUT_TIME){
-    //   logToSDCard("FLIGHT TERMINATION COMPLETE"); 
-    //   digitalWrite(RELAY_PIN, LOW);  // Turn relay OFF
-    //   isTerminating = false;
-    // }
   }
 }

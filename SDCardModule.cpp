@@ -10,7 +10,7 @@ bool initSDCard(uint8_t csPin) {
     }
     Serial.println(F("SD card initialized."));
 
-    myFile = SD.open("log.txt", FILE_WRITE);
+    myFile = SD.open("HAB3_log.csv", FILE_WRITE);
     if (!myFile){
         Serial.println(F("Failed to open log.txt for writing!"));
         sdReady = false;
@@ -38,15 +38,7 @@ void logToSDCard(const String &data) {
         Serial.println(F("SD not ready, cannot log."));
         return;
     }
-
-    String timestamp = getTimestamp();
-    
-    myFile.print(timestamp);
-    myFile.print(" -> ");     
-    myFile.println(data);
-    
-    Serial.print("Logged to SD card: ");
-    Serial.println(timestamp + " -> " + data);
+    myFile.print(data);
 }
 
 void logErrorToSDCard(const String &message) {

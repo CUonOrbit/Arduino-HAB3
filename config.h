@@ -18,4 +18,3 @@
 //#define TERMINATION_TIME 1800000UL    // 30 minutes
 //#define TERMINATION_CUT_TIME 120000   // 2 minutes (relay burn)
 //#define TERMINATION_HEIGHT   30000  // In metres
-//#define TERMINATION_TIME     10800000  // 3 hours
