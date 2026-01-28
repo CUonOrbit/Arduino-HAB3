@@ -127,7 +127,7 @@ void loop(){
       lastFlushMs += FLUSH_INTERVAL_MS;
       flushSD();
     }
-
+  
     // --- Step 1: Wait 1 hour ---
     if (!pulseStarted && (millis() - startTime >= oneHour))  {
       logToSDCard("TERMINATING FLIGHT");

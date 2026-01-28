@@ -12,7 +12,7 @@ bool initSDCard(uint8_t csPin) {
 
     myFile = SD.open("log.txt", FILE_WRITE);
     if (!myFile){
-        Serial.println(F("Failed to open log.txt for writing!"));
+        Serial.println(F("Failed to open {} for writing!", myFile));
         sdReady = false;
         return false;
     }
@@ -42,7 +42,7 @@ void logToSDCard(const String &data) {
     String timestamp = getTimestamp();
     
     myFile.print(timestamp);
-    myFile.print(" -> ");     
+    myFile.print(",");     // csv file
     myFile.println(data);
     
     Serial.print("Logged to SD card: ");
