@@ -6,8 +6,8 @@
 
 // Termination
 //unsigned long oneHour = 3600000UL;     // 1 hour in miliseconds
-unsigned long oneHour = 20000UL;     // 10 seconds (TESTING)
-unsigned long oneMinute = 60000UL; 
+unsigned long oneHour = 30000UL;     // 10 seconds = 10000 (TESTING)
+unsigned long oneMinute = 60000UL;    // 1 min = 60000
 unsigned long startTime = 0;
 bool pulseStarted = false;
 
@@ -26,7 +26,7 @@ unsigned long lastFlushMs = 0;
 
 // Create module instance
 BMP280Module bmp280(0x76, 1013.25f, SENSOR_INTERVAL_MS);
-ThermistorModule thermistor(ThermistorPin);
+ThermistorModule thermistor(THERMISTOR_PIN);
 
 void setup() {
   // REMINDER:
@@ -37,11 +37,10 @@ void setup() {
   digitalWrite(RELAY_PIN, LOW);
 
   Serial.begin(115200);
-  //while (!Serial);      // remove when standalone
+  while (!Serial);      // remove when standalone
 
   delay(1000);
-  Serial.println(F("BMP280 5Hz"));
-  Serial.println(F("SD Logging"));
+  Serial.println(F("Initialize BMP280 5Hz, SD Card"));
 
   // Track module initialization status
   bool sdOK = initSDCard(SD_CS_PIN);
@@ -63,6 +62,9 @@ void setup() {
     errorLedState = true;
   }
 
+  Serial.println("H:M:S,Temp,Pressure,Altitude,BoardTemp");
+  String header_csv = "H:M:S,Temp(°C),Pressure(hPa),Altitude(m),BoardTemp(°C)";
+  logToSDCard(header_csv + "\n");
   startTime = millis(); // Start the 1-hour countdown
   lastSensorMs = millis();
   lastFlushMs = millis();
@@ -84,18 +86,20 @@ void loop(){
     // BMP280 data
     if (bmp280.update()) {                     // will be true whenever it takes a new sample
       const BMP280Reading &r = bmp280.getLastReading();
-
+      String timestamp = getTimestamp();
       if (!bmp280.isValid()) {                // checks the last reading's pressure against the range (300-1100 hPa)
-        String barometerLog = String("Temp: ") + r.temperatureC +
-                                "C, Pressure: " + r.pressureHpa +
-                                "hPa (OOR), Altitude: " + r.altitudeM +       // flag it as out-of-range
-                                "m (OOR)";  
+        String barometerLog = timestamp +
+                                "," + r.temperatureC +
+                                "," + r.pressureHpa +
+                                "(OOR)," + r.altitudeM +       // flag it as out-of-range
+                                "(OOR)";  
         logToSDCard(barometerLog);
       } else {
-        String barometerLog = String("Temp: ") + r.temperatureC +
-                                "C, Pressure: " + r.pressureHpa +
-                                "hPa, Altitude: " + r.altitudeM +
-                                "m";
+        String barometerLog = timestamp +
+                                "," + r.temperatureC +
+                                "," + r.pressureHpa +
+                                "," + r.altitudeM +
+                                ",";
         logToSDCard(barometerLog);                        
       }
     } 
@@ -103,12 +107,12 @@ void loop(){
     float boardTempC = thermistor.readTemperatureC();
     if (thermistor.isValid(boardTempC)) {
       String tempLog = thermistor.getLogString(boardTempC);
-      logToSDCard(tempLog);  // Logs to SD + Serial
-      Serial.print("BoardTemp: "); 
+      logToSDCard(tempLog + "\n");  // Logs to SD + Serial
+      Serial.print(","); 
       Serial.print(boardTempC, 1);
-      Serial.println(F("°C"));
+      Serial.println(F(""));
     } else {
-      logToSDCard("BoardTemp: INVALID");
+      logToSDCard("BoardTemp: INVALID\n");
       Serial.println(F("BoardTemp: INVALID"));
     }
 

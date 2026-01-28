@@ -21,11 +21,11 @@ public:
     float R2 = R1 * (1023.0f / (float)Vout - 1.0f);
     float logR2 = log(R2);
     float tempK = 1.0f / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2);
-    return tempK - 273.15f;  // Kelvin → Celsius
+    return tempK - 273.15f;  // Kelvin to Celsius
   }
   
   String getLogString(float tempC) {
-    return "BoardTemp: " + String(tempC, 1) + "°C";
+    return String(tempC, 1); // °C 
   }
   
   bool isValid(float tempC) {
