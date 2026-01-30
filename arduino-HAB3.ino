@@ -4,12 +4,9 @@
 #include "ThermistorModule.h"
 #include "config.h"
 
-// Termination
-//unsigned long oneHour = 3600000UL;     // 1 hour in miliseconds
-unsigned long oneHour = 30000UL;     // 10 seconds = 10000 (TESTING)
-unsigned long oneMinute = 60000UL;    // 1 min = 60000
+
+bool pulseStarted = false;  // Termination
 unsigned long startTime = 0;
-bool pulseStarted = false;
 
 // LED blink timing
 const int errorBlinkInterval = 500; // milliseconds
@@ -133,7 +130,7 @@ void loop(){
     }
   
     // --- Step 1: Wait 1 hour ---
-    if (!pulseStarted && (millis() - startTime >= oneHour))  {
+    if (!pulseStarted && (millis() - startTime >= TERMINATION_TIME))  {
       logToSDCard("TERMINATING FLIGHT");
       digitalWrite(RELAY_PIN, HIGH);            // RELAY_PIN 5; Turn NiCr ON
       pulseStarted = true;              // Mark that the 1-minute pulse has begun
@@ -141,7 +138,7 @@ void loop(){
     }
 
     // --- Step 2: After pulse starts, run NiCr for 1 minute ---
-    if (pulseStarted && (millis() - startTime >= oneMinute))  {
+    if (pulseStarted && (millis() - startTime >= TERMINATION_CUT_TIME))  {
       digitalWrite(RELAY_PIN, LOW);                                            // Turn NiCr OFF after 1 minute
       logToSDCard("FLIGHT TERMINATION COMPLETE");
       // After this point, everything stays off permanently

@@ -15,6 +15,11 @@
 
 #define THERMISTOR_PIN    A0
 
+//#define TERMINATION_TIME  3600000UL;    // 1 hour in miliseconds; flight for an hour
+#define TERMINATION_TIME  10000UL      // termination test with 10 seconds period
+#define TERMINATION_CUT_TIME  60000UL    // burning Nicr for 1 min = 60000
+
+
 //#define TERMINATION_TIME 1800000UL    // 30 minutes
 //#define TERMINATION_CUT_TIME 120000   // 2 minutes (relay burn)
 //#define TERMINATION_HEIGHT   30000  // In metres
