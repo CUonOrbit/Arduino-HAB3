@@ -34,7 +34,7 @@ void setup() {
   digitalWrite(RELAY_PIN, LOW);
 
   Serial.begin(115200);
-  while (!Serial);      // remove when standalone
+  //while (!Serial);      // remove when standalone
 
   delay(1000);
   Serial.println(F("Initialize BMP280 5Hz, SD Card"));
@@ -112,16 +112,6 @@ void loop(){
       logToSDCard("BoardTemp: INVALID\n");
       Serial.println(F("BoardTemp: INVALID"));
     }
-
-    // Vout = analogRead(ThermistorPin);
-    // R2 = R1 * (1023.0 / (float)Vout - 1.0); // Voltage divider to find the second resistance
-    // logR2 = log(R2);
-    // Temp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)); // Temperature in Kelvin
-    // Temp = Temp - 273.15; // Converting to Celsius 
-
-    // Serial.print("Temperature: "); 
-    // Serial.print(Temp);
-    // Serial.println("°C");
 
     // Periodic SD flush
     if (now - lastFlushMs >= FLUSH_INTERVAL_MS) {
